@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from supabase import create_client
 from dotenv import load_dotenv
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from dateutil import parser
 import os
 
 load_dotenv()
@@ -22,10 +23,10 @@ def obtener_taquillas():
     return {"ok": True, "rows": res.data}
 
 
-@app.route("/taquillas/<taquilla_id>", methods=["GET"])
-def obtener_taquilla(taquilla_id):
+@app.route("/taquillas/<id_taquilla>", methods=["GET"])
+def obtener_taquilla(id_taquilla):
     res = (
-        supabase.table("taquillas").select("*").eq("id", taquilla_id).single().execute()
+        supabase.table("taquillas").select("*").eq("id", id_taquilla).single().execute()
     )
     if res.data:
         return {"ok": True, "row": res.data}
@@ -33,12 +34,12 @@ def obtener_taquilla(taquilla_id):
     return {"ok": False, "error": "Taquilla not found"}, 404
 
 
-@app.route("/taquillas/<taquilla_id>/estado", methods=["GET"])
-def obtener_estado_taquilla(taquilla_id):
+@app.route("/taquillas/<id_taquilla>/estado", methods=["GET"])
+def obtener_estado_taquilla(id_taquilla):
     res = (
         supabase.table("taquillas")
         .select("reservado")
-        .eq("id", taquilla_id)
+        .eq("id", id_taquilla)
         .single()
         .execute()
     )
@@ -61,18 +62,42 @@ def obtener_reserva(reserva_id):
     return {"ok": True, "row": res.data}
 
 
-@app.route("/reservas/taquilla/<taquilla_id>", methods=["GET"])
-def obtener_reservas_por_taquilla(taquilla_id):
+@app.route("/reservas/taquilla/<id_taquilla>", methods=["GET"])
+def obtener_reservas_por_taquilla(id_taquilla):
     res = (
-        supabase.table("reservas").select("*").eq("taquilla_id", taquilla_id).execute()
+        supabase.table("reservas").select("*").eq("id_taquilla", id_taquilla).execute()
     )
     return {"ok": True, "rows": res.data}
 
 
-@app.route("/reservas/<taquilla_id>", methods=["POST"])
-def crear_reserva(taquilla_id):
+@app.route("/reservas/<id_taquilla>", methods=["POST"])
+def crear_reserva(id_taquilla):
+    data = request.json
+
+    # 1. Verificar que llega la fecha del usuario
+    if "fecha_fin" not in data:
+        return {"ok": False, "error": "fecha_fin is required"}, 400
+
+    # 2. Parsear CUALQUIER formato recibido
+    try:
+        fecha_fin = parser.parse(data["fecha_fin"])
+    except Exception:
+        return {"ok": False, "error": "Invalid fecha_fin format"}, 400
+
+    # 3. Convertir a TIMESTAMPTZ en UTC (obligatorio)
+    fecha_fin_utc = fecha_fin.astimezone(timezone.utc).isoformat()
+
+    # 4. Añadir al diccionario final
+    data["fecha_fin"] = fecha_fin_utc
+
+    # 5. Crear fecha_inicio = ahora
+    fecha_inicio_utc = datetime.now(timezone.utc).isoformat()
+    data["fecha_inicio"] = fecha_inicio_utc
+
+    # ---- Lógica de reserva ----
+
     res_taquilla = (
-        supabase.table("taquillas").select("*").eq("id", taquilla_id).execute()
+        supabase.table("taquillas").select("*").eq("id", id_taquilla).execute()
     )
 
     if not res_taquilla.data:
@@ -83,22 +108,17 @@ def crear_reserva(taquilla_id):
     if taquilla["reservado"]:
         return {"ok": False, "error": "Taquilla already reserved"}, 400
 
-    data = request.json
-    data["id_taquilla"] = taquilla_id
-
-    now = datetime.now(timezone.utc)
-    data["fecha_inicio"] = now.isoformat()
-    data["fecha_fin"] = (now + timedelta(hours=1)).isoformat()
-
     try:
         res = (
             supabase.table("reservas")
             .insert(data, returning="representation")
             .execute()
         )
+
         supabase.table("taquillas").update({"reservado": True}).eq(
-            "id", taquilla_id
+            "id", id_taquilla
         ).execute()
+
     except Exception as e:
         return {"ok": False, "error": str(e)}, 500
 
