@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
+from flask_cors import CORS
 from supabase import create_client
 from dotenv import load_dotenv
 from datetime import datetime, timezone
@@ -13,6 +14,7 @@ supabase_key = os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
 app = Flask(__name__)
+CORS(app)
 
 # Endpoints para taquillas
 
