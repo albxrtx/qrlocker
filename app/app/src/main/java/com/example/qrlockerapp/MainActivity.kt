@@ -2,6 +2,8 @@ package com.example.qrlockerapp
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -31,7 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.qrlockerapp.navigation.AppNavHost
+import com.example.qrlockerapp.retrofit.TaquillaViewModel
 import com.example.qrlockerapp.ui.theme.QrLockerAppTheme
 
 import com.journeyapps.barcodescanner.ScanContract
@@ -42,88 +49,88 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            enableEdgeToEdge()
-            QrLockerAppTheme {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF000000), // Negro oscuro
-                                    Color(0xFF1A1A1A)  // Negro menos oscuro
-                                )
-                            )
-                        )
-                ) {
-                    HomeScreen()
-                }
+            QrLockerAppTheme() {
+                AppNavHost()
             }
         }
     }
 }
 
 @Composable
-fun HomeScreen() {
-    Column(
+fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewModel = viewModel()) {
+
+    val context = LocalContext.current
+    val scanLauncher = rememberLauncherForActivityResult(
+
+        contract = ScanContract(), onResult = { result ->
+            val idTaquilla = result.contents.substringAfterLast("/")
+            if (idTaquilla.isNotBlank()) {
+                Log.d("HomeScreen", "Escaneado: $idTaquilla")
+                // Llamada al backend para obtener estado de la taquilla
+                taquillaViewModel.obtenerEstado(idTaquilla) { taquilla, error ->
+                    if (taquilla != null) {
+                        if (!taquilla.reservado) {
+                            navController.navigate("form/$idTaquilla")
+                        } else {
+                            // Mostrar mensaje: taquilla ocupada
+                            Toast.makeText(context, "Taquilla ocupada", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(WindowInsets.systemBars.asPaddingValues()),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "QrLocker",
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier
-                .padding(16.dp)
-        )
-
-        ScanButton(
-            modifier = Modifier
-                .padding(16.dp)
-        )
-    }
-}
-
-@Composable
-fun ScanButton(modifier: Modifier = Modifier) {
-    var resultadoEscaneo by remember { mutableStateOf("Escanear") }
-
-    val scanLauncher = rememberLauncherForActivityResult(
-        contract = ScanContract(), onResult = { result ->
-            resultadoEscaneo = result.contents ?: "Sin resultado"
-        })
-    Button(
-        onClick = { scanLauncher.launch(ScanOptions()) },
-        modifier = Modifier.height(50.dp).fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Magenta)
-    ) {
-        Text(
-            text = resultadoEscaneo, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewHomeScreen() {
-    QrLockerAppTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF393939), // Negro oscuro
-                            Color(0xFF000000)  // Negro menos oscuro
-                        )
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF000000), // Negro oscuro
+                        Color(0xFF1A1A1A)  // Negro menos oscuro
                     )
                 )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(WindowInsets.systemBars.asPaddingValues()),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HomeScreen()
+            Text(
+                text = "QrLocker",
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier
+                    .padding(16.dp)
+            )
+
+            Button(
+                onClick = {
+                    val options = ScanOptions().apply {
+                        setCameraId(0)
+                        setBeepEnabled(true)
+                        setBarcodeImageEnabled(true)
+                    }
+                    scanLauncher.launch(options)
+                },
+                modifier = Modifier
+                    .height(50.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Magenta)
+            ) {
+                Text(
+                    text = "Escanear QR",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
         }
     }
 }
+

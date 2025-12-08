@@ -37,13 +37,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.qrlockerapp.retrofit.ReservaViewModel
 import java.util.Calendar
 
-@Preview
 @Composable
-fun FormScreen() {
+fun FormScreen(
+    idTaquilla: String,
+    viewModel: ReservaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+    var mensaje by remember { mutableStateOf<String?>(null) }
 
     var fechaHora by remember { mutableStateOf("") }
     val datePickerDialog = DatePickerDialog(
@@ -87,7 +91,7 @@ fun FormScreen() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(color = Color.White, text =  "Nombre taquilla")
+            Text(color = Color.White, text = "Taquilla: $idTaquilla")
 
             OutlinedTextField(
                 value = fechaHora,
@@ -104,7 +108,16 @@ fun FormScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = { },
+                onClick = {
+                    if (fechaHora.isNotEmpty()) {
+                        viewModel.crearReserva(idTaquilla, fechaHora) { success, msg ->
+                            mensaje =
+                                msg ?: if (success) "Reserva creada" else "Error al crear reserva"
+                        }
+                    } else {
+                        mensaje = "Selecciona una fecha primero"
+                    }
+                },
                 modifier = Modifier
                     .height(50.dp)
                     .fillMaxWidth(),
