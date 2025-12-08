@@ -91,10 +91,10 @@ def crear_reserva(id_taquilla):
 
     # 4. Añadir al diccionario final
     data["fecha_fin"] = fecha_fin_utc
-
     # 5. Crear fecha_inicio = ahora
     fecha_inicio_utc = datetime.now(timezone.utc).isoformat()
     data["fecha_inicio"] = fecha_inicio_utc
+    data["id_taquilla"] = id_taquilla
 
     # ---- Lógica de reserva ----
 

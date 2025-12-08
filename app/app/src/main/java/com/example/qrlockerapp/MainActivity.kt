@@ -70,6 +70,7 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
                 taquillaViewModel.obtenerEstado(idTaquilla) { taquilla, error ->
                     if (taquilla != null) {
                         if (!taquilla.reservado) {
+                            Log.d("NavHost", "Navegando a Form con id=$idTaquilla")
                             navController.navigate("form/$idTaquilla")
                         } else {
                             // Mostrar mensaje: taquilla ocupada

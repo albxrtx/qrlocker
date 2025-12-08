@@ -1,5 +1,6 @@
 package com.example.qrlockerapp.retrofit
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -24,9 +25,20 @@ class ReservaViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val body = mapOf("fecha_fin" to fechaFin)
+
+                Log.d("API_CALL", "POST /reservas/$idTaquilla")
+                Log.d("API_CALL", "Body enviado: $body")
+
                 val respuesta = RetrofitClient.apiService.crearReserva(idTaquilla, body)
-                onResult(respuesta.ok, respuesta.message ?: respuesta.error)
+
+                Log.d("API_CALL", "Respuesta recibida: $respuesta")
+                if (respuesta.ok) {
+                    onResult(true, "Reserva creada correctamente")
+                } else {
+                    onResult(false, respuesta.error ?: "Error desconocido")
+                }
             } catch (e: Exception) {
+                Log.e("API_CALL", "ERROR: ${e.message}")
                 onResult(false, e.message)
             }
         }

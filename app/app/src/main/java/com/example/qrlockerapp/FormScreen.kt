@@ -3,6 +3,7 @@ package com.example.qrlockerapp
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Build
+import android.util.Log
 import android.widget.DatePicker
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -110,6 +111,7 @@ fun FormScreen(
             Button(
                 onClick = {
                     if (fechaHora.isNotEmpty()) {
+                        Log.d("FormScreen", "Haciendo peticion POST")
                         viewModel.crearReserva(idTaquilla, fechaHora) { success, msg ->
                             mensaje =
                                 msg ?: if (success) "Reserva creada" else "Error al crear reserva"
