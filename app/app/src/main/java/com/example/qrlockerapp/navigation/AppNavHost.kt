@@ -18,11 +18,15 @@ fun AppNavHost() {
             HomeScreen(navController)
         }
         composable(
-            route = "form/{idTaquilla}",
-            arguments = listOf(navArgument("idTaquilla") { type = NavType.StringType })
+            route = "form/{idTaquilla}/{nombreTaquilla}",
+            arguments = listOf(
+                navArgument("idTaquilla") { type = NavType.StringType },
+                navArgument("nombreTaquilla") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val idTaquilla = backStackEntry.arguments?.getString("idTaquilla") ?: ""
-            FormScreen(idTaquilla = idTaquilla)
+            val nombreTaquilla = backStackEntry.arguments?.getString("nombreTaquilla") ?: ""
+            FormScreen(idTaquilla = idTaquilla, nombreTaquilla = nombreTaquilla,navController = navController)
         }
     }
 }

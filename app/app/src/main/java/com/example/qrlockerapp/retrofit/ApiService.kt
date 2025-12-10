@@ -7,11 +7,11 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Body
 
-interface ApiService{
+interface ApiService {
 
     @GET("taquillas/{id_taquilla}")
     suspend fun obtenerEstadoTaquilla(
-        @Path("id_taquilla") idTaquilla:String
+        @Path("id_taquilla") idTaquilla: String
     ): RespuestaTaquilla
 
     @POST("reservas/{id_taquilla}")
