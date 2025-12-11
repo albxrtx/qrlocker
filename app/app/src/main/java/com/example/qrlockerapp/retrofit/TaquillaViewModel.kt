@@ -12,7 +12,6 @@ class TaquillaViewModel: ViewModel() {
         viewModelScope.launch {
             try {
                 val respuesta = RetrofitClient.apiService.obtenerEstadoTaquilla(idTaquilla)
-                Log.d("HomeScreen", "Respuesta del backend: $respuesta")
                 if (respuesta.ok && respuesta.row != null) {
                     onResult(respuesta.row, null)
                 } else {

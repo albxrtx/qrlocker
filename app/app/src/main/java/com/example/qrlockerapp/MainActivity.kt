@@ -1,5 +1,6 @@
 package com.example.qrlockerapp
 
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -51,7 +52,7 @@ import com.journeyapps.barcodescanner.ScanOptions
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             QrLockerAppTheme() {
                 AppNavHost()
@@ -67,24 +68,28 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
     val scanLauncher = rememberLauncherForActivityResult(
 
         contract = ScanContract(), onResult = { result ->
-            val idTaquilla = result.contents.substringAfterLast("/")
-            if (idTaquilla.isNotBlank()) {
-                Log.d("HomeScreen", "Escaneado: $idTaquilla")
-                // Llamada al backend para obtener estado de la taquilla
-                taquillaViewModel.obtenerEstado(idTaquilla) { taquilla, error ->
-                    if (taquilla != null) {
-                        if (!taquilla.reservado) {
-                            Log.d("NavHost", "Navegando a Form con id=$idTaquilla")
-                            navController.navigate("form/$idTaquilla/${taquilla.nombre}")
+            if (result.contents != null) {
+                val idTaquilla = result.contents.substringAfterLast("/")
+                if (idTaquilla.isNotBlank()) {
+                    // Llamada al backend para obtener estado de la taquilla
+                    taquillaViewModel.obtenerEstado(idTaquilla) { taquilla, error ->
+                        if (taquilla != null) {
+                            if (!taquilla.reservado) {
+                                navController.navigate("form/$idTaquilla/${taquilla.nombre}")
+                            } else {
+                                Toast.makeText(context, "Taquilla ocupada", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
                         } else {
-                            // Mostrar mensaje: taquilla ocupada
-                            Toast.makeText(context, "Taquilla ocupada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                            navController.navigate("home")
                         }
-                    } else {
-                        Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
                     }
                 }
+            } else {
+                Toast.makeText(context, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
             }
+
         })
     Box(
         modifier = Modifier
@@ -92,8 +97,8 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF000000), // Negro oscuro
-                        Color(0xFF262626)  // Negro menos oscuro
+                        Color(0xFF000000),
+                        Color(0xFF262626)  
                     )
                 )
             )
@@ -110,8 +115,7 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
                 text = "QrLocker",
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier
-                    .padding(16.dp)
+                modifier = Modifier.padding(16.dp)
             )
             Image(
                 painter = painterResource(id = R.drawable.image1),

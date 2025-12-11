@@ -2,10 +2,8 @@ package com.example.qrlockerapp
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.os.Build
 import android.util.Log
-import android.widget.DatePicker
-import androidx.annotation.RequiresApi
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,11 +39,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.qrlockerapp.retrofit.ReservaViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 @Composable
@@ -57,9 +58,9 @@ fun FormScreen(
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    var mensaje by remember { mutableStateOf<String?>(null) }
 
     var fechaHora by remember { mutableStateOf("") }
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
@@ -100,8 +101,7 @@ fun FormScreen(
                 text = "QrLocker",
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier
-                    .padding(16.dp)
+                modifier = Modifier.padding(16.dp)
             )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -123,6 +123,7 @@ fun FormScreen(
             Column(
                 horizontalAlignment = Alignment.Start
             ) {
+
                 Text(color = Color.White, text = "Taquilla: $nombreTaquilla")
                 OutlinedTextField(
                     value = fechaHora,
@@ -142,13 +143,25 @@ fun FormScreen(
                         if (fechaHora.isNotEmpty()) {
                             Log.d("FormScreen", "Haciendo peticion POST")
                             viewModel.crearReserva(idTaquilla, fechaHora) { success, msg ->
-                                mensaje =
-                                    msg
-                                        ?: if (success) "Reserva creada" else "Error al crear reserva"
+                                if (success) {
+                                    Toast.makeText(context, "Reserva creada", Toast.LENGTH_SHORT)
+                                        .show()
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        delay(2000L)
+                                        navController.navigate("home") {
+                                            popUpTo("home") { inclusive = true }
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context, "Error al crear la reserva", Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
-                            navController.navigate("home")
                         } else {
-                            mensaje = "Selecciona una fecha primero"
+                            Toast.makeText(
+                                context, "La fecha no puede estar vacia", Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     modifier = Modifier
