@@ -61,15 +61,18 @@ fun FormScreen(
 
     var fechaHora by remember { mutableStateOf("") }
 
+    // Crea un diálogo de selección de fecha.
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
+            // Cuando se selecciona una fecha, muestra un diálogo de selección de hora.
             val timePickerDialog = TimePickerDialog(
                 context, { _, hourOfDay, minute ->
+                    // Cuando se selecciona una hora, formatea la fecha y la hora y actualiza el estado.
                     fechaHora = String.format(
                         "%04d-%02d-%02d %02d:%02d", year, month + 1, dayOfMonth, hourOfDay, minute
                     )
-                }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
+                }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true // true para formato de 24 horas.
             )
             timePickerDialog.show()
         },
@@ -97,12 +100,14 @@ fun FormScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Text(
                 text = "QrLocker",
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 modifier = Modifier.padding(16.dp)
             )
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -120,11 +125,13 @@ fun FormScreen(
                 )
             }
 
+
             Column(
                 horizontalAlignment = Alignment.Start
             ) {
 
                 Text(color = Color.White, text = "Taquilla: $nombreTaquilla")
+
                 OutlinedTextField(
                     value = fechaHora,
                     onValueChange = { },
@@ -132,33 +139,41 @@ fun FormScreen(
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
+                        // Icono de calendario que muestra el diálogo de selección de fecha al hacer clic.
                         IconButton(onClick = { datePickerDialog.show() }) {
                             Icon(Icons.Default.DateRange, contentDescription = "Seleccionar fecha")
                         }
                     })
 
                 Spacer(modifier = Modifier.height(24.dp))
+                // Botón para crear la reserva.
                 Button(
                     onClick = {
+                        // Comprueba si se ha seleccionado una fecha.
                         if (fechaHora.isNotEmpty()) {
-                            Log.d("FormScreen", "Haciendo peticion POST")
+                            // Llama al ViewModel para crear la reserva.
                             viewModel.crearReserva(idTaquilla, fechaHora) { success, msg ->
                                 if (success) {
+                                    // Muestra un mensaje de éxito.
                                     Toast.makeText(context, "Reserva creada", Toast.LENGTH_SHORT)
                                         .show()
+                                    // Navega a la pantalla de inicio después de un breve retraso.
                                     CoroutineScope(Dispatchers.Main).launch {
                                         delay(2000L)
                                         navController.navigate("home") {
+                                            // Limpia el back stack hasta la pantalla de inicio.
                                             popUpTo("home") { inclusive = true }
                                         }
                                     }
                                 } else {
+                                    // Muestra un mensaje de error.
                                     Toast.makeText(
                                         context, "Error al crear la reserva", Toast.LENGTH_SHORT
                                     ).show()
                                 }
                             }
                         } else {
+                            // Muestra un mensaje si no se ha seleccionado una fecha.
                             Toast.makeText(
                                 context, "La fecha no puede estar vacia", Toast.LENGTH_SHORT
                             ).show()
@@ -182,4 +197,3 @@ fun FormScreen(
     }
 
 }
-

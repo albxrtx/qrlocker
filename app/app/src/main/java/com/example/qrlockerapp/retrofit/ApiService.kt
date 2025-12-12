@@ -9,11 +9,24 @@ import retrofit2.http.Body
 
 interface ApiService {
 
+    /**
+     * Obtiene el estado de una taquilla específica.
+     *
+     * @param idTaquilla El ID de la taquilla a consultar.
+     * @return Un objeto [RespuestaTaquilla] que contiene la información de la taquilla.
+     */
     @GET("taquillas/{id_taquilla}")
     suspend fun obtenerEstadoTaquilla(
         @Path("id_taquilla") idTaquilla: String
     ): RespuestaTaquilla
 
+    /**
+     * Crea una nueva reserva para una taquilla.
+     *
+     * @param idTaquilla El ID de la taquilla para la que se crea la reserva.
+     * @param reserva Un mapa que contiene los datos de la reserva (ej. fecha de fin).
+     * @return Un objeto [RespuestaReserva] que contiene el resultado de la operación.
+     */
     @POST("reservas/{id_taquilla}")
     suspend fun crearReserva(
         @Path("id_taquilla") idTaquilla: String,

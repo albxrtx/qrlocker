@@ -49,9 +49,11 @@ import com.example.qrlockerapp.ui.theme.QrLockerAppTheme
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Fija la orientación de la pantalla en modo vertical.
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             QrLockerAppTheme() {
@@ -65,28 +67,39 @@ class MainActivity : ComponentActivity() {
 fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewModel = viewModel()) {
 
     val context = LocalContext.current
+    // Crea un lanzador para la actividad de escaneo de códigos QR.
     val scanLauncher = rememberLauncherForActivityResult(
-
-        contract = ScanContract(), onResult = { result ->
+        contract = ScanContract(),
+        onResult = { result ->
+            // Se ejecuta cuando el escáner devuelve un resultado.
             if (result.contents != null) {
+                // Extrae el ID de la taquilla del contenido del QR.
                 val idTaquilla = result.contents.substringAfterLast("/")
                 if (idTaquilla.isNotBlank()) {
-                    // Llamada al backend para obtener estado de la taquilla
+//                     Llamada al backend para obtener estado de la taquilla
                     taquillaViewModel.obtenerEstado(idTaquilla) { taquilla, error ->
+//                        Comprobamos que la taquilla exista
                         if (taquilla != null) {
+//                            Comprobamos que la taquilla no esté ocupada
                             if (!taquilla.reservado) {
+                                // Navega a la pantalla de formulario si la taquilla está libre.
                                 navController.navigate("form/$idTaquilla/${taquilla.nombre}")
                             } else {
+                                // Muestra un mensaje si la taquilla está ocupada.
                                 Toast.makeText(context, "Taquilla ocupada", Toast.LENGTH_SHORT)
                                     .show()
                             }
+//                            Mostramos el error en caso de que haya
                         } else {
+                            // Muestra un mensaje de error si la taquilla no se encuentra o hay otro problema.
                             Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
                             navController.navigate("home")
                         }
                     }
                 }
+//                Mostramos un toast si se cancela el escaneo
             } else {
+                // Muestra un toast si el usuario cancela el escaneo.
                 Toast.makeText(context, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
             }
 
@@ -97,8 +110,7 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF000000),
-                        Color(0xFF262626)  
+                        Color(0xFF000000), Color(0xFF262626)
                     )
                 )
             )
@@ -131,13 +143,16 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
             )
 
 
+            // Botón para iniciar el escaneo de QR.
             Button(
                 onClick = {
+                    // Configura las opciones del escáner.
                     val options = ScanOptions().apply {
-                        setCameraId(0)
-                        setBeepEnabled(true)
-                        setBarcodeImageEnabled(true)
+                        setCameraId(0) // Usa la cámara trasera.
+                        setBeepEnabled(true) // Activa un sonido al escanear.
+                        setBarcodeImageEnabled(true) // Guarda una imagen del código escaneado.
                     }
+                    // Inicia el escáner de QR.
                     scanLauncher.launch(options)
                 },
                 modifier = Modifier
@@ -156,4 +171,3 @@ fun HomeScreen(navController: NavController, taquillaViewModel: TaquillaViewMode
         }
     }
 }
-
