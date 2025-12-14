@@ -16,9 +16,8 @@ supabase = create_client(supabase_url, supabase_key)
 app = Flask(__name__)
 CORS(app)
 
+
 # Endpoints para taquillas
-
-
 @app.route("/taquillas", methods=["GET"])
 def obtener_taquillas():
     res = supabase.table("taquillas").select("*").execute()
@@ -76,27 +75,20 @@ def obtener_reservas_por_taquilla(id_taquilla):
 def crear_reserva(id_taquilla):
     data = request.json
 
-    # 1. Verificar que llega la fecha del usuario
     if "fecha_fin" not in data:
         return {"ok": False, "error": "fecha_fin is required"}, 400
 
-    # 2. Parsear CUALQUIER formato recibido
     try:
         fecha_fin = parser.parse(data["fecha_fin"])
     except Exception:
         return {"ok": False, "error": "Invalid fecha_fin format"}, 400
 
-    # 3. Convertir a TIMESTAMPTZ en UTC (obligatorio)
     fecha_fin_utc = fecha_fin.astimezone(timezone.utc).isoformat()
 
-    # 4. Añadir al diccionario final
     data["fecha_fin"] = fecha_fin_utc
-    # 5. Crear fecha_inicio = ahora
     fecha_inicio_utc = datetime.now(timezone.utc).isoformat()
     data["fecha_inicio"] = fecha_inicio_utc
     data["id_taquilla"] = id_taquilla
-
-    # ---- Lógica de reserva ----
 
     res_taquilla = (
         supabase.table("taquillas").select("*").eq("id", id_taquilla).execute()

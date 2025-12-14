@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Fija la orientación de la pantalla en modo vertical.
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        
         setContent {
             QrLockerAppTheme() {
                 AppNavHost()
